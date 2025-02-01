@@ -1,22 +1,56 @@
-option('tests', type: 'feature',
-       description: 'Enable Unit tests')
-option('log-threshold', type: 'boolean',
-       description: 'Automatically log SEL records for threshold sensor events')
-option('log-pulse', type: 'boolean',
-       description: 'Automatically log events to Redfish for pulse type assert-deassert sensor events')
-option('log-watchdog', type: 'boolean',
-       description: 'Automatically log SEL records for watchdog events')
-option('log-alarm', type: 'boolean',
-       description: 'Monitor threshold alarm signals and log SEL records for threshold sensor events')
-option('log-host', type: 'boolean',
-       description: 'Automatically log SEL records for host error events')
-option('send-to-logger', type: 'boolean',
-       description: 'Automatically log events to Redfish for pulse type assert-deassert sensor events')
-option('log-crash', type: 'boolean',
-        description: 'Automaticall log events to Redfish for systemd service failure')
-option('sel-delete', type: 'boolean',
-       description: 'Enables ability to delete SEL entries given a record ID')
-option('sel-extended', type: 'boolean',
-       description: 'Enables extended SEL support to store extended data in emmc/sdcard')
-option('static-sensor-number', type: 'boolean', value: false,
-       description: 'Use static sensor numbers from D-Bus Sensor properties.')
+option(
+    'tests',
+    type: 'feature',
+    description: 'Enable Unit tests',
+)
+option(
+    'log-threshold',
+    type: 'boolean',
+    description: 'Automatically log SEL records for threshold sensor events',
+)
+option(
+    'log-pulse',
+    type: 'boolean',
+    description: 'Automatically log events to Redfish for pulse type assert-deassert sensor events',
+)
+option(
+    'log-watchdog',
+    type: 'boolean',
+    description: 'Automatically log SEL records for watchdog events',
+)
+option(
+    'log-alarm',
+    type: 'boolean',
+    description: 'Monitor threshold alarm signals and log SEL records for threshold sensor events',
+)
+option(
+    'log-host',
+    type: 'boolean',
+    description: 'Automatically log SEL records for host error events',
+)
+option(
+    'send-to-logger',
+    type: 'boolean',
+    description: 'Automatically log events to Redfish for pulse type assert-deassert sensor events',
+)
+option(
+    'sel-delete',
+    type: 'boolean',
+    description: 'Enables ability to delete SEL entries given a record ID',
+)
+option(
+       'log-crash',
+       type: 'boolean',
+       description: 'Automaticall log events to Redfish for systemd service failure',
+)
+option(
+       'sel-extended',
+       type: 'boolean',
+       description: 'Enables extended SEL support to store extended data in emmc/sdcard',
+)
+option(
+       'static-sensor-number',
+       type: 'boolean',
+       value: false,
+       description: 'Use static sensor numbers from D-Bus Sensor properties.',
+)
