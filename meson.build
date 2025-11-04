@@ -88,6 +88,13 @@ if systemd.found()
     )
 endif
 
+if not get_option('send-to-logger')
+    install_data(
+        'rsyslog/phosphor-sel-logger.conf',
+        install_dir: join_paths(get_option('sysconfdir'), 'rsyslog.d'),
+    )
+endif
+
 if get_option('tests').enabled()
     subdir('tests')
 endif
