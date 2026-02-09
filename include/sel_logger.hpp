@@ -49,6 +49,8 @@ constexpr const char* warningLevel =
     "xyz.openbmc_project.Logging.Entry.Level.Warning";
 constexpr const char* errorLevel =
     "xyz.openbmc_project.Logging.Entry.Level.Critical";
+constexpr const char* naLevel =
+    "xyz.openbmc_project.Logging.Entry.Level.NotApplicable";
 
 enum class eventReading : uint8_t
 {

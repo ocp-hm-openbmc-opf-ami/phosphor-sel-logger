@@ -20,7 +20,14 @@ inline static void
     newLogEntry.append(std::move(eventMessage), std::move(logLevel),
                        std::map<std::string, std::string>(
                            {{std::move(serviceName), std::move(unitName)}}));
-    conn->call(newLogEntry);
+    try
+    {
+       conn->call(newLogEntry);
+    }
+    catch (const sdbusplus::exception_t& e)
+    {
+        std::cerr << "Failed adding crash event: " << e.what() << "\n";
+    }
 }
 inline static sdbusplus::bus::match_t
     crashErrorEventMonitor(std::shared_ptr<sdbusplus::asio::connection> conn)

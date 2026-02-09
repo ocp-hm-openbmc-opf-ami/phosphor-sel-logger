@@ -374,9 +374,16 @@ inline static sdbusplus::bus::match_t startThresholdAssertMonitor(
                      {"DIRECTION", direction},
                      {"THRESHOLD", std::to_string(thresholdVal)},
                      {"READING", std::to_string(assertValue)}}));
-            conn->call(AddToLog);
-            doPefTask(conn, msg.get_path(), assert, recordId, eventData,
-                      journalMsg, std::nullopt);
+	    try
+	    {
+                conn->call(AddToLog);
+                doPefTask(conn, msg.get_path(), assert, recordId, eventData,
+                          journalMsg, std::nullopt);
+	    }
+	    catch (const sdbusplus::exception_t& e)
+	    {
+		std::cerr << "Failed adding PEF event: " << e.what() << "\n";
+	    }
         }
 #else
         selAddSystemRecord(

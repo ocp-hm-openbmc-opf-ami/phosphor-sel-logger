@@ -479,6 +479,23 @@ static uint16_t selAddSystemRecord(
         severity = informationalLevel;
     }
 
+    auto addData = additionalData.value();
+    uint8_t eventType = 0x6f;
+    auto itr = addData.find("EVENT_TYPE");
+    if (itr != addData.end())
+    {
+        eventType = static_cast<uint8_t>(std::stoi(addData["EVENT_TYPE"]));
+        eventType &= 0x7F; // skipping 8th bit to retrive eventReadingTypeCode.
+        if (eventType != 0x01)
+        {
+            severity = naLevel;
+        }
+    }
+    else
+    {
+        severity = naLevel;
+    }
+
     sdbusplus::message_t AddToLog = conn->new_method_call(
         "xyz.openbmc_project.Logging", "/xyz/openbmc_project/logging",
         "xyz.openbmc_project.Logging.Create", "Create");
@@ -519,8 +536,15 @@ static uint16_t selAddSystemRecord(
         return response;
     };
 
-    AddToLog.append(journalMsg, severity, initialize());
-    conn->call(AddToLog);
+    try
+    {
+        AddToLog.append(journalMsg, severity, initialize());
+        conn->call(AddToLog);
+    }
+    catch (const sdbusplus::exception_t& e)
+    {
+        std::cerr << "Failed adding this event: " << e.what() << "\n";
+    }
 #else
     recordId = getNewRecordId();
     if (recordId != 0)
@@ -543,11 +567,18 @@ static uint16_t selAddSystemRecord(
         auto method = bus.new_method_call(
             osService, path.c_str(), "org.freedesktop.DBus.Properties", "Set");
         method.append(DiscreteIntf, "State", event);
-        auto reply = bus.call(method);
-        if (reply.is_method_error())
-        {
-            std::cerr << "Failed to update OS Critical Stop sensor";
-        }
+	try
+	{
+           auto reply = bus.call(method);
+           if (reply.is_method_error())
+	   {
+	       std::cerr << "Failed to update OS Critical Stop sensor";
+	   }
+	}
+	catch (const sdbusplus::exception_t& e)
+	{
+            std::cerr << "Failed to update OS Critical Stop sensor " << e.what() << "\n";
+	}
     }
 
     doPefTask(conn, path, assert, recordId, selData, message, sensorType);
@@ -584,7 +615,15 @@ static uint16_t selAddOemRecord(
              {"RECORD_TYPE", std::to_string(recordType)},
              {"EVENT_DIR", std::to_string(0)},
              {"SENSOR_DATA", selDataStr}}));
-    conn->call(AddToLog);
+    try
+    {
+        conn->call(AddToLog);
+    }
+    catch (const sdbusplus::exception_t& e)
+    {
+        std::cerr << "Failed adding this event: " << e.what() << "\n";
+    }
+
     return 0;
 #else
     unsigned int recordId = getNewRecordId();
