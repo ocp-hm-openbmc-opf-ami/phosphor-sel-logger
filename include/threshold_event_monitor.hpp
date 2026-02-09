@@ -25,8 +25,10 @@ enum class thresholdEventOffsets : uint8_t
 {
     lowerNonCritGoingLow = 0x00,
     lowerCritGoingLow = 0x02,
+    lowerNonRecoverableGoingLow = 0x04,
     upperNonCritGoingHigh = 0x07,
     upperCritGoingHigh = 0x09,
+    upperNonRecoverableGoingHigh = 0x0b,
 };
 
 static constexpr const uint8_t thresholdEventDataTriggerReadingByte2 = (1 << 6);
@@ -108,6 +110,17 @@ inline static sdbusplus::bus::match_t startThresholdAssertMonitor(
             eventData[0] =
                 static_cast<uint8_t>(thresholdEventOffsets::upperCritGoingHigh);
         }
+        else if (event == "NonRecoverableAlarmLow") 
+        {
+            eventData[0] =
+                static_cast<uint8_t>(thresholdEventOffsets::lowerNonRecoverableGoingLow);
+        }
+        else if (event == "NonRecoverableAlarmHigh") 
+        {
+            eventData[0] =
+                static_cast<uint8_t>(thresholdEventOffsets::upperNonRecoverableGoingHigh);
+        }
+        
         // Indicate that bytes 2 and 3 are threshold sensor trigger values
         eventData[0] |= thresholdEventDataTriggerReadingByte2 |
                         thresholdEventDataTriggerReadingByte3;
@@ -274,6 +287,38 @@ inline static sdbusplus::bus::match_t startThresholdAssertMonitor(
                 eventType = eventInfo;
                 direction = "low";
                 redfishMessageID += ".SensorThresholdCriticalHighGoingLow";
+            }
+        }
+        else if (event == "NonRecoverableHigh")
+        {
+            threshold = "non recoverable high";
+            if (assert)
+            {
+                eventType = eventErr;
+                direction = "high";
+                redfishMessageID += ".SensorThresholdNonRecoverableHighGoingHigh";
+            }
+            else
+            {
+                eventType = eventInfo;
+                direction = "low";
+                redfishMessageID += ".SensorThresholdNonRecoverableHighGoingLow";
+            }
+        }
+        else if (event == "NonRecoverableLow")
+        {
+            threshold = "non recoverable low";
+            if (assert)
+            {
+                eventType = eventErr;
+                direction = "high";
+                redfishMessageID += ".SensorThresholdNonRecoverableLowGoingHigh";
+            }
+            else
+            {
+                eventType = eventInfo;
+                direction = "low";
+                redfishMessageID += ".SensorThresholdNonRecoverableLowGoingLow";
             }
         }
 

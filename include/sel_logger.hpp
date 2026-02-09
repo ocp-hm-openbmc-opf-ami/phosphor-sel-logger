@@ -54,8 +54,10 @@ enum class eventReading : uint8_t
 {
     lowerNonCritGoingLow = 0x00,
     lowerCritGoingLow = 0x02,
+    lowerNonRecoverableGoingLow = 0x04,
     upperNonCritGoingHigh = 0x07,
-    upperCritGoingHigh = 0x09
+    upperCritGoingHigh = 0x09,
+    upperNonRecoverableGoingHigh = 0x0b,
 };
 #endif
 

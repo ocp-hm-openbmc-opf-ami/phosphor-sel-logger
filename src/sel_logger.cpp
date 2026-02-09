@@ -467,6 +467,10 @@ static uint16_t selAddSystemRecord(
         case eventReading::upperNonCritGoingHigh:
             severity = warningLevel;
             break;
+        case eventReading::lowerNonRecoverableGoingLow:
+        case eventReading::upperNonRecoverableGoingHigh:
+            severity = errorLevel;
+            break;
         default:
             severity = informationalLevel;
     }
