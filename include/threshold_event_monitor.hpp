@@ -51,8 +51,8 @@ inline static sdbusplus::bus::match_t startThresholdAssertMonitor(
         std::string sensorName;
         std::string thresholdInterface;
         std::string event;
-        bool assert;
-        double assertValue;
+        bool assert = false;
+        double assertValue = 0.0;
         try
         {
             msg.read(sensorName, thresholdInterface, event, assert,
@@ -356,7 +356,7 @@ inline static sdbusplus::bus::match_t startThresholdAssertMonitor(
         }
         if (eventType != eventNone)
         {
-            unsigned int recordId;
+            unsigned int recordId = 0;
             std::string selDataStr;
             toHexStr(eventData, selDataStr);
             sdbusplus::message_t AddToLog = conn->new_method_call(
