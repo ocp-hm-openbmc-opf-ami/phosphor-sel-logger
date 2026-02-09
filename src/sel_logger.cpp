@@ -14,6 +14,7 @@
 // limitations under the License.
 */
 #include <systemd/sd-journal.h>
+#include <phosphor-ipmi-host/selutility.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/asio/io_context.hpp>
@@ -639,6 +640,55 @@ static uint16_t selAddOemRecord(
 #endif
 }
 
+#if defined(SEL_LOGGER_SEND_TO_LOGGING_SERVICE) && defined(SEL_LOGGER_ENABLE_SEL_EXTENDED)
+static uint16_t selAddOemRecordExt(
+    std::shared_ptr<sdbusplus::asio::connection> conn,
+    const std::string& path,
+    const std::vector<uint8_t>& selData, std::vector<uint8_t>& eventData, const std::string& extendedSel)
+{
+    // A maximum of 13 bytes of SEL event data are allowed in an OEM record
+    if (selData.size() > selOemDataMaxSize)
+    {
+        throw std::invalid_argument("Event data too large");
+    }
+
+    if(selData[2] != oemRecordType)
+    {
+	throw std::invalid_argument("Not a Oem record");
+    }
+
+    eventData[0] = extendedSelSignature;
+    uint8_t eventDir =  selData[13] & 0x80; // 80h representing the event direction
+    uint8_t eventType = selData[13] & 0x7F; // 7F representing EventType.
+    uint16_t generatorID = static_cast<uint16_t>(selData[7]| (selData[8] << 8));
+    uint8_t sensorType = selData[11];
+
+    std::string selDataStr;
+    toHexStr(selData, selDataStr);
+
+    std::string eventDataStr;
+    toHexStr(eventData, eventDataStr);
+
+    sdbusplus::message_t AddToLog = conn->new_method_call(
+        "xyz.openbmc_project.Logging", "/xyz/openbmc_project/logging",
+        "xyz.openbmc_project.Logging.Create", "Create");
+
+    AddToLog.append("", "xyz.openbmc_project.Logging.Entry.Level.Informational",
+                    std::map<std::string, std::string>(
+                        {{"SENSOR_PATH", path.c_str()},
+                         {"GENERATOR_ID", std::to_string(generatorID)},
+                         {"RECORD_TYPE", std::to_string(oemRecordType)},
+			 {"EVENT_DIR", std::to_string(eventDir)},
+			 {"EVENT_TYPE", std::to_string(eventType)},
+			 {"SENSOR_TYPE", std::to_string(sensorType)},
+                         {"SENSOR_DATA", selDataStr},
+			 {"EVENT_DATA", eventDataStr},
+			 {"EXTENDED_SEL_DATA", extendedSel.c_str() }}));
+    conn->call(AddToLog);
+    return 0;
+}
+#endif
+
 int main(int, char*[])
 {
 #ifndef SEL_LOGGER_SEND_TO_LOGGING_SERVICE
@@ -685,6 +735,18 @@ int main(int, char*[])
                const uint8_t& recordType) {
             return selAddOemRecord(conn, message, selData, recordType);
         });
+
+//#ifdef SEL_LOGGER_ENABLE_SEL_EXTENDED
+#if defined(SEL_LOGGER_SEND_TO_LOGGING_SERVICE) && defined(SEL_LOGGER_ENABLE_SEL_EXTENDED)    
+    // Add a new extended SEL entry
+    ifaceAddSel->register_method("IpmiSelAddExtended",
+                                 [conn](const std::string& path,
+                                        const std::vector<uint8_t>& selData,
+                                        std::vector<uint8_t>& eventData,
+                                        const std::string extendedSel) {
+        return selAddOemRecordExt(conn, path, selData, eventData, extendedSel);
+    });
+#endif    
 
 #ifndef SEL_LOGGER_SEND_TO_LOGGING_SERVICE
     // Clear SEL entries

@@ -14,3 +14,5 @@ option('log-crash', type: 'boolean',
         description: 'Automaticall log events to Redfish for systemd service failure')
 option('sel-delete', type: 'boolean',
        description: 'Enables ability to delete SEL entries given a record ID')
+option('sel-extended', type: 'boolean',
+       description: 'Enables extended SEL support to store extended data in emmc/sdcard')

@@ -46,6 +46,10 @@ if get_option('sel-delete')
   cpp_args += '-DSEL_LOGGER_ENABLE_SEL_DELETE'
 endif
 
+if get_option('sel-extended')
+  cpp_args += '-DSEL_LOGGER_ENABLE_SEL_EXTENDED'
+endif
+
 executable(
   'sel-logger',
   'src/sel_logger.cpp',

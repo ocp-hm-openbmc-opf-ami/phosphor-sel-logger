@@ -18,6 +18,9 @@
 #include <chrono>
 #include <filesystem>
 
+static constexpr uint8_t oemRecordType = 0xDF;
+static constexpr uint8_t extendedSelSignature = 0xAA;
+
 using namespace std::literals::chrono_literals;
 constexpr std::chrono::microseconds DBUS_TIMEOUT = 5s;
 
