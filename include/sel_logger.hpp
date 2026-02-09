@@ -15,12 +15,21 @@
 */
 
 #pragma once
+#include <chrono>
 #include <filesystem>
+
+using namespace std::literals::chrono_literals;
+constexpr std::chrono::microseconds DBUS_TIMEOUT = 5s;
 
 static constexpr const char* ipmiSelObject = "xyz.openbmc_project.Logging.IPMI";
 static constexpr const char* ipmiSelPath = "/xyz/openbmc_project/Logging/IPMI";
 static constexpr const char* ipmiSelAddInterface =
     "xyz.openbmc_project.Logging.IPMI";
+
+constexpr static const char* pefService = "xyz.openbmc_project.pef.alerting";
+constexpr static const char* pefObjPath = "/xyz/openbmc_project/pef/alerting";
+constexpr static const char* pefIface = "xyz.openbmc_project.pef.pefTask";
+constexpr static const char* pefTaskMethod = "doPefTask";
 
 // ID string generated using journalctl to include in the MESSAGE_ID field for
 // SEL entries.  Helps with filtering SEL entries in the journal.

@@ -19,6 +19,7 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/container/flat_map.hpp>
 #include <boost/container/flat_set.hpp>
+#include <intel-ipmi-oem/sdrutils.hpp>
 #include <pulse_event_monitor.hpp>
 #include <sdbusplus/asio/object_server.hpp>
 #include <sel_logger.hpp>
@@ -404,6 +405,27 @@ static uint16_t selAddSystemRecord(
             "IPMI_SEL_GENERATOR_ID=%x", genId, "IPMI_SEL_SENSOR_PATH=%s",
             path.c_str(), "IPMI_SEL_EVENT_DIR=%x", assert, "IPMI_SEL_DATA=%s",
             selDataStr.c_str(), std::forward<T>(metadata)..., NULL);
+        // Do PEF Action
+        uint8_t sentype = getSensorTypeFromPath(path);
+        uint8_t senNum = getSensorNumberFromPath(path);
+        uint8_t evtype = getSensorEventTypeFromPath(path);
+
+        evtype |= assert ? 0x00 : 0x80;
+
+        std::chrono::microseconds timeout = DBUS_TIMEOUT;
+        auto startPefTask = conn->new_method_call(pefService, pefObjPath,
+                                                  pefIface, pefTaskMethod);
+        startPefTask.append(static_cast<uint16_t>(recordId), sentype, senNum,
+                            evtype, selData[0], selData[1], selData[2],
+                            static_cast<uint16_t>(genId), message.c_str());
+        try
+        {
+            conn->call(startPefTask, timeout.count());
+        }
+        catch (sdbusplus::exception_t&)
+        {
+            std::cerr << "Failed to call doPefTask\n";
+        }
     }
     return recordId;
 #endif
