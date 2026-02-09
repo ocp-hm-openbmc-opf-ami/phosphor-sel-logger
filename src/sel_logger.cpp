@@ -456,6 +456,25 @@ static uint16_t selAddSystemRecord(
     toHexStr(selData, selDataStr);
 
 #ifdef SEL_LOGGER_SEND_TO_LOGGING_SERVICE
+    std::string severity;
+    switch (static_cast<eventReading>(selData[0]))
+    {
+        case eventReading::lowerCritGoingLow:
+        case eventReading::upperCritGoingHigh:
+            severity = errorLevel;
+            break;
+        case eventReading::lowerNonCritGoingLow:
+        case eventReading::upperNonCritGoingHigh:
+            severity = warningLevel;
+            break;
+        default:
+            severity = informationalLevel;
+    }
+    if (!assert)
+    {
+        severity = informationalLevel;
+    }
+
     sdbusplus::message_t AddToLog = conn->new_method_call(
         "xyz.openbmc_project.Logging", "/xyz/openbmc_project/logging",
         "xyz.openbmc_project.Logging.Create", "Create");
@@ -496,10 +515,7 @@ static uint16_t selAddSystemRecord(
         return response;
     };
 
-    // TODO: based on the event only the the severity should be defined
-    AddToLog.append(journalMsg,
-                    "xyz.openbmc_project.Logging.Entry.Level.Informational",
-                    initialize());
+    AddToLog.append(journalMsg, severity, initialize());
     conn->call(AddToLog);
 #else
     recordId = getNewRecordId();

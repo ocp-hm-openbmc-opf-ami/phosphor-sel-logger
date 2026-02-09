@@ -42,6 +42,21 @@ static constexpr const char* selLogIntf =
     "xyz.openbmc_project.Logging.Settings";
 static constexpr int maxSELEntries = 2000;
 static bool maxSELEntriesReached = false;
+#else
+constexpr const char* informationalLevel =
+    "xyz.openbmc_project.Logging.Entry.Level.Informational";
+constexpr const char* warningLevel =
+    "xyz.openbmc_project.Logging.Entry.Level.Warning";
+constexpr const char* errorLevel =
+    "xyz.openbmc_project.Logging.Entry.Level.Critical";
+
+enum class eventReading : uint8_t
+{
+    lowerNonCritGoingLow = 0x00,
+    lowerCritGoingLow = 0x02,
+    upperNonCritGoingHigh = 0x07,
+    upperCritGoingHigh = 0x09
+};
 #endif
 
 // ID string generated using journalctl to include in the MESSAGE_ID field for
