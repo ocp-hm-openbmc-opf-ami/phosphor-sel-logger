@@ -26,10 +26,12 @@ static constexpr const char* ipmiSelPath = "/xyz/openbmc_project/Logging/IPMI";
 static constexpr const char* ipmiSelAddInterface =
     "xyz.openbmc_project.Logging.IPMI";
 
-constexpr static const char* pefService = "xyz.openbmc_project.pef.alerting";
-constexpr static const char* pefObjPath = "/xyz/openbmc_project/pef/alerting";
-constexpr static const char* pefIface = "xyz.openbmc_project.pef.pefTask";
-constexpr static const char* pefTaskMethod = "doPefTask";
+static constexpr const char* pefService = "xyz.openbmc_project.pef.alerting";
+static constexpr const char* pefObjPath = "/xyz/openbmc_project/pef/alerting";
+static constexpr const char* pefIface = "xyz.openbmc_project.pef.pefTask";
+static constexpr const char* pefTaskMethod = "doPefTask";
+static constexpr const char* osService = "xyz.openbmc_project.OSSStatusSensor";
+static constexpr const char* DiscreteIntf = "xyz.openbmc_project.Sensor.State";
 
 #ifndef SEL_LOGGER_SEND_TO_LOGGING_SERVICE
 // SEL policy in dbus

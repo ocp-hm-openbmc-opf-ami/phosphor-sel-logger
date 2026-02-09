@@ -474,6 +474,41 @@ static uint16_t selAddSystemRecord(
     conn->call(AddToLog);
     return 0;
 #else
+    // check for OS Critical Sensor Event
+    uint8_t sentype = getSensorTypeFromPath(path);
+    uint8_t senNum = getSensorNumberFromPath(path);
+    uint8_t evtype = getSensorEventTypeFromPath(path);
+    if (sentype == osCriticalStop && evtype == sensorSpecificEvent)
+    {
+        auto bus = sdbusplus::bus::new_default();
+        ipmi::Value event = static_cast<uint16_t>(1 << selData[0]);
+        auto method = bus.new_method_call(
+            osService, path.c_str(), "org.freedesktop.DBus.Properties", "Set");
+        method.append(DiscreteIntf, "State", event);
+        auto reply = bus.call(method);
+        if (reply.is_method_error())
+        {
+            std::cerr << "Failed to update OS Critical Stop sensor";
+        }
+    }
+    // check for OS Critical Sensor Event
+    uint8_t sentype = getSensorTypeFromPath(path);
+    uint8_t senNum = getSensorNumberFromPath(path);
+    uint8_t evtype = getSensorEventTypeFromPath(path);
+    if (sentype == osCriticalStop && evtype == sensorSpecificEvent)
+    {
+        auto bus = sdbusplus::bus::new_default();
+        ipmi::Value event = static_cast<uint16_t>(1 << selData[0]);
+        auto method = bus.new_method_call(
+            osService, path.c_str(), "org.freedesktop.DBus.Properties", "Set");
+        method.append(DiscreteIntf, "State", event);
+        auto reply = bus.call(method);
+        if (reply.is_method_error())
+        {
+            std::cerr << "Failed to update OS Critical Stop sensor";
+        }
+    }
+
     unsigned int recordId = getNewRecordId();
     if (recordId < selInvalidRecID)
     {
@@ -487,14 +522,11 @@ static uint16_t selAddSystemRecord(
                 path.c_str(), "IPMI_SEL_EVENT_DIR=%x", assert,
                 "IPMI_SEL_DATA=%s", selDataStr.c_str(),
                 std::forward<T>(metadata)..., NULL);
-            // Do PEF Action
-            uint8_t sentype = getSensorTypeFromPath(path);
-            uint8_t senNum = getSensorNumberFromPath(path);
-            uint8_t evtype = getSensorEventTypeFromPath(path);
 
             evtype |= assert ? 0x00 : 0x80;
-
             std::chrono::microseconds timeout = DBUS_TIMEOUT;
+
+            // Do PEF Action
             auto startPefTask = conn->new_method_call(pefService, pefObjPath,
                                                       pefIface, pefTaskMethod);
             startPefTask.append(static_cast<uint16_t>(recordId), sentype,
