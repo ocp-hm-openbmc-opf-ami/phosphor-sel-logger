@@ -5,12 +5,12 @@
 #include <string_view>
 #include <variant>
 
-inline static void
-    sendCrashEventLog(std::shared_ptr<sdbusplus::asio::connection> conn,
-                      const std::string unitName)
+inline static void sendCrashEventLog(
+    std::shared_ptr<sdbusplus::asio::connection> conn,
+    const std::string unitName)
 {
-    std::string eventMessage = "Service " + unitName +
-                               " has exited unsuccessfully";
+    std::string eventMessage =
+        "Service " + unitName + " has exited unsuccessfully";
     sdbusplus::message_t newLogEntry = conn->new_method_call(
         "xyz.openbmc_project.Logging", "/xyz/openbmc_project/logging",
         "xyz.openbmc_project.Logging.Create", "Create");
@@ -22,15 +22,15 @@ inline static void
                            {{std::move(serviceName), std::move(unitName)}}));
     try
     {
-       conn->call(newLogEntry);
+        conn->call(newLogEntry);
     }
     catch (const sdbusplus::exception_t& e)
     {
         std::cerr << "Failed adding crash event: " << e.what() << "\n";
     }
 }
-inline static sdbusplus::bus::match_t
-    crashErrorEventMonitor(std::shared_ptr<sdbusplus::asio::connection> conn)
+inline static sdbusplus::bus::match_t crashErrorEventMonitor(
+    std::shared_ptr<sdbusplus::asio::connection> conn)
 {
     auto crashEventMatcherCallback = [conn](sdbusplus::message_t& msg) {
         uint32_t jobID{};
@@ -39,11 +39,12 @@ inline static sdbusplus::bus::match_t
         std::string jobResult{};
         try
         {
-           msg.read(jobID, jobPath, jobUnit, jobResult);
+            msg.read(jobID, jobPath, jobUnit, jobResult);
         }
         catch (const sdbusplus::exception_t& e)
         {
-              std::cerr << "Failed to read value from " << msg.get_path() << " e= " << e.what() << "\n";
+            std::cerr << "Failed to read value from " << msg.get_path()
+                      << " e= " << e.what() << "\n";
         }
         std::string test = jobPath.str;
 
