@@ -451,7 +451,7 @@ static uint16_t selAddSystemRecord(
     {
         throw std::invalid_argument("Event data too large");
     }
-    unsigned int recordId;
+    unsigned int recordId = 0;
     uint8_t sensorType = 0xFF;
     std::string selDataStr;
     toHexStr(selData, selDataStr);
