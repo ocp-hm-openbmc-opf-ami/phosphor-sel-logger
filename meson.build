@@ -37,6 +37,11 @@ if get_option('send-to-logger')
 
   deps += dependency('phosphor-logging')
 endif
+
+if get_option('log-crash')
+   cpp_args += '-DSEL_LOGGER_LOG_CRASH'
+ endif
+
 if get_option('sel-delete')
   cpp_args += '-DSEL_LOGGER_ENABLE_SEL_DELETE'
 endif

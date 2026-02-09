@@ -10,5 +10,7 @@ option('log-host', type: 'boolean',
        description: 'Automatically log SEL records for host error events')
 option('send-to-logger', type: 'boolean',
        description: 'Automatically log events to Redfish for pulse type assert-deassert sensor events')
+option('log-crash', type: 'boolean',
+        description: 'Automaticall log events to Redfish for systemd service failure')
 option('sel-delete', type: 'boolean',
        description: 'Enables ability to delete SEL entries given a record ID')

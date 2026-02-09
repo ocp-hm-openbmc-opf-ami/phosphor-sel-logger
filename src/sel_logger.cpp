@@ -31,6 +31,9 @@
 #ifdef SEL_LOGGER_MONITOR_HOST_ERROR_EVENTS
 #include <host_error_event_monitor.hpp>
 #endif
+#ifdef SEL_LOGGER_LOG_CRASH
+#include <crash_event_monitor.hpp>
+#endif
 
 #include <filesystem>
 #include <fstream>
@@ -656,6 +659,10 @@ int main(int, char*[])
 
 #ifdef SEL_LOGGER_MONITOR_HOST_ERROR_EVENTS
     startHostErrorEventMonitor(conn);
+#endif
+
+#ifdef SEL_LOGGER_LOG_CRASH
+    sdbusplus::bus::match_t crashEventMonitorH = crashErrorEventMonitor(conn);
 #endif
     io.run();
 
