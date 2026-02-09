@@ -110,17 +110,17 @@ inline static sdbusplus::bus::match_t startThresholdAssertMonitor(
             eventData[0] =
                 static_cast<uint8_t>(thresholdEventOffsets::upperCritGoingHigh);
         }
-        else if (event == "NonRecoverableAlarmLow") 
+        else if (event == "NonRecoverableAlarmLow")
         {
-            eventData[0] =
-                static_cast<uint8_t>(thresholdEventOffsets::lowerNonRecoverableGoingLow);
+            eventData[0] = static_cast<uint8_t>(
+                thresholdEventOffsets::lowerNonRecoverableGoingLow);
         }
-        else if (event == "NonRecoverableAlarmHigh") 
+        else if (event == "NonRecoverableAlarmHigh")
         {
-            eventData[0] =
-                static_cast<uint8_t>(thresholdEventOffsets::upperNonRecoverableGoingHigh);
+            eventData[0] = static_cast<uint8_t>(
+                thresholdEventOffsets::upperNonRecoverableGoingHigh);
         }
-        
+
         // Indicate that bytes 2 and 3 are threshold sensor trigger values
         eventData[0] |= thresholdEventDataTriggerReadingByte2 |
                         thresholdEventDataTriggerReadingByte3;
@@ -296,13 +296,15 @@ inline static sdbusplus::bus::match_t startThresholdAssertMonitor(
             {
                 eventType = eventErr;
                 direction = "high";
-                redfishMessageID += ".SensorThresholdNonRecoverableHighGoingHigh";
+                redfishMessageID +=
+                    ".SensorThresholdNonRecoverableHighGoingHigh";
             }
             else
             {
                 eventType = eventInfo;
                 direction = "low";
-                redfishMessageID += ".SensorThresholdNonRecoverableHighGoingLow";
+                redfishMessageID +=
+                    ".SensorThresholdNonRecoverableHighGoingLow";
             }
         }
         else if (event == "NonRecoverableLow")
@@ -312,7 +314,8 @@ inline static sdbusplus::bus::match_t startThresholdAssertMonitor(
             {
                 eventType = eventErr;
                 direction = "high";
-                redfishMessageID += ".SensorThresholdNonRecoverableLowGoingHigh";
+                redfishMessageID +=
+                    ".SensorThresholdNonRecoverableLowGoingHigh";
             }
             else
             {
@@ -323,10 +326,8 @@ inline static sdbusplus::bus::match_t startThresholdAssertMonitor(
         }
 
         std::string journalMsg(
-            std::string(sensorName) + " " + threshold + " threshold " +
-            (assert ? "assert" : "deassert") +
-            ". Reading=" + std::to_string(assertValue) +
-            " Threshold=" + std::to_string(thresholdVal) + ".");
+            redfishMessageID + "," + std::string(sensorName) + "," +
+            std::to_string(assertValue) + "," + std::to_string(thresholdVal));
 
 #ifdef SEL_LOGGER_SEND_TO_LOGGING_SERVICE
         std::string LogLevel = "";
@@ -374,16 +375,16 @@ inline static sdbusplus::bus::match_t startThresholdAssertMonitor(
                      {"DIRECTION", direction},
                      {"THRESHOLD", std::to_string(thresholdVal)},
                      {"READING", std::to_string(assertValue)}}));
-	    try
-	    {
+            try
+            {
                 conn->call(AddToLog);
                 doPefTask(conn, msg.get_path(), assert, recordId, eventData,
                           journalMsg, std::nullopt);
-	    }
-	    catch (const sdbusplus::exception_t& e)
-	    {
-		std::cerr << "Failed adding PEF event: " << e.what() << "\n";
-	    }
+            }
+            catch (const sdbusplus::exception_t& e)
+            {
+                std::cerr << "Failed adding PEF event: " << e.what() << "\n";
+            }
         }
 #else
         selAddSystemRecord(
