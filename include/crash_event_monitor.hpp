@@ -37,7 +37,14 @@ inline static sdbusplus::bus::match_t
         sdbusplus::message::object_path jobPath;
         std::string jobUnit{};
         std::string jobResult{};
-        msg.read(jobID, jobPath, jobUnit, jobResult);
+        try
+        {
+           msg.read(jobID, jobPath, jobUnit, jobResult);
+        }
+        catch (const sdbusplus::exception_t& e)
+        {
+              std::cerr << "Failed to read value from " << msg.get_path() << " e= " << e.what() << "\n";
+        }
         std::string test = jobPath.str;
 
         if (jobResult == "failed")
