@@ -426,16 +426,13 @@ static uint16_t getEntryCount()
 #endif
 #endif
 
-static void toHexStr(const std::vector<uint8_t>& data, std::string& hexStr)
-{
-    std::stringstream stream;
-    stream << std::hex << std::uppercase << std::setfill('0');
-    for (int v : data)
-    {
-        stream << std::setw(2) << v;
-    }
-    hexStr = stream.str();
-}
+#ifdef SEL_LOGGER_SEND_TO_LOGGING_SERVICE
+static void selAddSystemRecord(
+    [[maybe_unused]] std::shared_ptr<sdbusplus::asio::connection> conn,
+    [[maybe_unused]] const std::string& message, const std::string& path,
+    const std::vector<uint8_t>& selData, const bool& assert,
+    const uint16_t& genId, const std::optional<AdditionalData>& additionalData)
+#else
 
 template <typename... T>
 static uint16_t selAddSystemRecord(
@@ -443,12 +440,15 @@ static uint16_t selAddSystemRecord(
     [[maybe_unused]] const std::string& message, const std::string& path,
     const std::vector<uint8_t>& selData, const bool& assert,
     const uint16_t& genId, [[maybe_unused]] T&&... metadata)
+#endif
 {
     // Only 3 bytes of SEL event data are allowed in a system record
     if (selData.size() > selEvtDataMaxSize)
     {
         throw std::invalid_argument("Event data too large");
     }
+    unsigned int recordId;
+    uint8_t sensorType = 0xFF;
     std::string selDataStr;
     toHexStr(selData, selDataStr);
 
@@ -457,94 +457,77 @@ static uint16_t selAddSystemRecord(
         "xyz.openbmc_project.Logging", "/xyz/openbmc_project/logging",
         "xyz.openbmc_project.Logging.Create", "Create");
 
-    std::string journalMsg(
-        message + " from " + path + ": " +
-        " RecordType=" + std::to_string(selSystemType) +
-        ", GeneratorID=" + std::to_string(genId) +
-        ", EventDir=" + std::to_string(assert) + ", EventData=" + selDataStr);
+    std::string journalMsg = message;
+    if (journalMsg.empty())
+    {
+        std::string journalMsg(
+            message + " from " + path + ": " +
+            " RecordType=" + std::to_string(selSystemType) + ", GeneratorID=" +
+            std::to_string(genId) + ", EventDir=" + std::to_string(assert) +
+            ", EventData=" + selDataStr);
+    }
+    auto initialize = [&]() -> std::map<std::string, std::string> {
+        std::map<std::string, std::string> response{
+            {"SENSOR_PATH", path},
+            {"GENERATOR_ID", std::to_string(genId)},
+            {"RECORD_TYPE", std::to_string(selSystemType)},
+            {"EVENT_DIR", std::to_string(assert)},
+            {"SENSOR_DATA", selDataStr}};
 
-    AddToLog.append(
-        journalMsg, "xyz.openbmc_project.Logging.Entry.Level.Informational",
-        std::map<std::string, std::string>(
-            {{"SENSOR_PATH", path},
-             {"GENERATOR_ID", std::to_string(genId)},
-             {"RECORD_TYPE", std::to_string(selSystemType)},
-             {"EVENT_DIR", std::to_string(assert)},
-             {"SENSOR_DATA", selDataStr}}));
+        if (additionalData.has_value())
+        {
+            auto addData = additionalData.value();
+            auto itr = addData.find("SENSOR_TYPE");
+            if (itr != addData.end())
+            {
+                sensorType =
+                    static_cast<uint8_t>(std::stoi(addData["SENSOR_TYPE"]));
+                return addData;
+            }
+            else
+            {
+                sensorType = getSensorTypeFromPath(path);
+                return response;
+            }
+        }
+        return response;
+    };
+
+    // TODO: based on the event only the the severity should be defined
+    AddToLog.append(journalMsg,
+                    "xyz.openbmc_project.Logging.Entry.Level.Informational",
+                    initialize());
     conn->call(AddToLog);
-    return 0;
 #else
-    // check for OS Critical Sensor Event
-    uint8_t sentype = getSensorTypeFromPath(path);
-    uint8_t senNum = getSensorNumberFromPath(path);
-    uint8_t evtype = getSensorEventTypeFromPath(path);
-    if (sentype == osCriticalStop && evtype == sensorSpecificEvent)
+    recordId = getNewRecordId();
+    if (recordId != 0)
     {
-        auto bus = sdbusplus::bus::new_default();
-        ipmi::Value event = static_cast<uint16_t>(1 << selData[0]);
-        auto method = bus.new_method_call(
-            osService, path.c_str(), "org.freedesktop.DBus.Properties", "Set");
-        method.append(DiscreteIntf, "State", event);
-        auto reply = bus.call(method);
-        if (reply.is_method_error())
-        {
-            std::cerr << "Failed to update OS Critical Stop sensor";
-        }
+        sd_journal_send(
+            "MESSAGE=%s", message.c_str(), "PRIORITY=%i", selPriority,
+            "MESSAGE_ID=%s", selMessageId, "IPMI_SEL_RECORD_ID=%d", recordId,
+            "IPMI_SEL_RECORD_TYPE=%x", selSystemType,
+            "IPMI_SEL_GENERATOR_ID=%x", genId, "IPMI_SEL_SENSOR_PATH=%s",
+            path.c_str(), "IPMI_SEL_EVENT_DIR=%x", assert, "IPMI_SEL_DATA=%s",
+            selDataStr.c_str(), std::forward<T>(metadata)..., NULL);
     }
-    // check for OS Critical Sensor Event
-    uint8_t sentype = getSensorTypeFromPath(path);
-    uint8_t senNum = getSensorNumberFromPath(path);
-    uint8_t evtype = getSensorEventTypeFromPath(path);
-    if (sentype == osCriticalStop && evtype == sensorSpecificEvent)
-    {
-        auto bus = sdbusplus::bus::new_default();
-        ipmi::Value event = static_cast<uint16_t>(1 << selData[0]);
-        auto method = bus.new_method_call(
-            osService, path.c_str(), "org.freedesktop.DBus.Properties", "Set");
-        method.append(DiscreteIntf, "State", event);
-        auto reply = bus.call(method);
-        if (reply.is_method_error())
-        {
-            std::cerr << "Failed to update OS Critical Stop sensor";
-        }
-    }
-
-    unsigned int recordId = getNewRecordId();
-    if (recordId < selInvalidRecID)
-    {
-        if (recordId != 0)
-        {
-            sd_journal_send(
-                "MESSAGE=%s", message.c_str(), "PRIORITY=%i", selPriority,
-                "MESSAGE_ID=%s", selMessageId, "IPMI_SEL_RECORD_ID=%d",
-                recordId, "IPMI_SEL_RECORD_TYPE=%x", selSystemType,
-                "IPMI_SEL_GENERATOR_ID=%x", genId, "IPMI_SEL_SENSOR_PATH=%s",
-                path.c_str(), "IPMI_SEL_EVENT_DIR=%x", assert,
-                "IPMI_SEL_DATA=%s", selDataStr.c_str(),
-                std::forward<T>(metadata)..., NULL);
-
-            evtype |= assert ? 0x00 : 0x80;
-            std::chrono::microseconds timeout = DBUS_TIMEOUT;
-
-            // Do PEF Action
-            auto startPefTask = conn->new_method_call(pefService, pefObjPath,
-                                                      pefIface, pefTaskMethod);
-            startPefTask.append(static_cast<uint16_t>(recordId), sentype,
-                                senNum, evtype, selData[0], selData[1],
-                                selData[2], static_cast<uint16_t>(genId),
-                                message.c_str());
-            try
-            {
-                conn->call(startPefTask, timeout.count());
-            }
-            catch (sdbusplus::exception_t&)
-            {
-                std::cerr << "Failed to call doPefTask\n";
-            }
-        }
-    }
-    return recordId;
 #endif
+    // check for OS Critical Sensor Event
+    uint8_t evtype = getSensorEventTypeFromPath(path);
+    if (sensorType == osCriticalStop && evtype == sensorSpecificEvent)
+    {
+        auto bus = sdbusplus::bus::new_default();
+        ipmi::Value event = static_cast<uint16_t>(1 << selData[0]);
+        auto method = bus.new_method_call(
+            osService, path.c_str(), "org.freedesktop.DBus.Properties", "Set");
+        method.append(DiscreteIntf, "State", event);
+        auto reply = bus.call(method);
+        if (reply.is_method_error())
+        {
+            std::cerr << "Failed to update OS Critical Stop sensor";
+        }
+    }
+
+    doPefTask(conn, path, assert, recordId, selData, message, sensorType);
 }
 
 static uint16_t selAddOemRecord(
@@ -614,6 +597,16 @@ int main(int, char*[])
         server.add_interface(ipmiSelPath, ipmiSelAddInterface);
 
     // Add a new SEL entry
+#ifdef SEL_LOGGER_SEND_TO_LOGGING_SERVICE
+    ifaceAddSel->register_method(
+        "IpmiSelAdd",
+        [conn](const std::string& message, const std::string& path,
+               const std::vector<uint8_t>& selData, const bool& assert,
+               const uint16_t& genId, const AdditionalData& addData) {
+            return selAddSystemRecord(conn, message, path, selData, assert,
+                                      genId, addData);
+        });
+#else
     ifaceAddSel->register_method(
         "IpmiSelAdd",
         [conn](const std::string& message, const std::string& path,
@@ -622,6 +615,7 @@ int main(int, char*[])
             return selAddSystemRecord(conn, message, path, selData, assert,
                                       genId);
         });
+#endif
     // Add a new OEM SEL entry
     ifaceAddSel->register_method(
         "IpmiSelAddOem",

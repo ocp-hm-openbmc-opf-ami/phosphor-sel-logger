@@ -62,9 +62,68 @@ static const std::string selLogFilename = "ipmi_sel";
 static const std::string nextRecordFilename = "next_records";
 #endif
 
+static void toHexStr(const std::vector<uint8_t>& data, std::string& hexStr)
+{
+    std::stringstream stream;
+    stream << std::hex << std::uppercase << std::setfill('0');
+    for (int v : data)
+    {
+        stream << std::setw(2) << v;
+    }
+    hexStr = stream.str();
+}
+
+static void doPefTask(
+    std::shared_ptr<sdbusplus::asio::connection> conn, const std::string& path,
+    bool assert, const uint16_t& recordId, const std::vector<uint8_t>& selData,
+    const std::string& message, const std::optional<uint8_t> addSenType)
+{
+    // Assign default values if none are provided
+    uint8_t senNum = 0xff;
+    uint8_t evtype = 0xff;
+    uint8_t sentype = 0xff;
+
+    if (!path.empty())
+    {
+        senNum = getSensorNumberFromPath(path);
+        evtype = getSensorEventTypeFromPath(path);
+        sentype = getSensorTypeFromPath(path);
+    }
+    else if (addSenType.has_value())
+    {
+        sentype = addSenType.value();
+        evtype = getEventType(sentype);
+    }
+    evtype |= assert ? 0x00 : 0x80;
+    std::chrono::microseconds timeout = DBUS_TIMEOUT;
+    auto startPefTask =
+        conn->new_method_call(pefService, pefObjPath, pefIface, pefTaskMethod);
+    startPefTask.append(static_cast<uint16_t>(recordId), sentype, senNum,
+                        evtype, selData[0], selData[1], selData[2], selBMCGenID,
+                        message.c_str());
+    try
+    {
+        conn->call(startPefTask, timeout.count());
+    }
+    catch (sdbusplus::exception_t&)
+    {
+        std::cerr << "Failed to call doPefTask\n";
+    }
+}
+
+#ifdef SEL_LOGGER_SEND_TO_LOGGING_SERVICE
+using AdditionalData = std::map<std::string, std::string>;
+static void selAddSystemRecord(
+    std::shared_ptr<sdbusplus::asio::connection> conn,
+    const std::string& message, const std::string& path,
+    const std::vector<uint8_t>& selData, const bool& assert,
+    const uint16_t& genId, const std::optional<AdditionalData>& addData);
+#else
+
 template <typename... T>
 static uint16_t
     selAddSystemRecord(std::shared_ptr<sdbusplus::asio::connection> conn,
                        const std::string& message, const std::string& path,
                        const std::vector<uint8_t>& selData, const bool& assert,
                        const uint16_t& genId, T&&... metadata);
+#endif

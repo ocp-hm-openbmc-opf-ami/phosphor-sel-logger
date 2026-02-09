@@ -311,17 +311,27 @@ inline static sdbusplus::bus::match_t startThresholdAssertMonitor(
         }
         if (eventType != eventNone)
         {
+            unsigned int recordId;
+            std::string selDataStr;
+            toHexStr(eventData, selDataStr);
             sdbusplus::message_t AddToLog = conn->new_method_call(
                 "xyz.openbmc_project.Logging", "/xyz/openbmc_project/logging",
                 "xyz.openbmc_project.Logging.Create", "Create");
-            AddToLog.append(journalMsg, LogLevel,
-                            std::map<std::string, std::string>(
-                                {{"SENSOR_PATH", std::string(msg.get_path())},
-                                 {"EVENT", threshold},
-                                 {"DIRECTION", direction},
-                                 {"THRESHOLD", std::to_string(thresholdVal)},
-                                 {"READING", std::to_string(assertValue)}}));
+            AddToLog.append(
+                journalMsg, LogLevel,
+                std::map<std::string, std::string>(
+                    {{"SENSOR_PATH", std::string(msg.get_path())},
+                     {"EVENT", threshold},
+                     {"SENSOR_DATA", selDataStr},
+                     {"GENERATOR_ID", std::to_string(selBMCGenID)},
+                     {"RECORD_TYPE", std::to_string(selSystemType)},
+                     {"EVENT_DIR", std::to_string(assert)},
+                     {"DIRECTION", direction},
+                     {"THRESHOLD", std::to_string(thresholdVal)},
+                     {"READING", std::to_string(assertValue)}}));
             conn->call(AddToLog);
+            doPefTask(conn, msg.get_path(), assert, recordId, eventData,
+                      journalMsg, std::nullopt);
         }
 #else
         selAddSystemRecord(

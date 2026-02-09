@@ -225,12 +225,27 @@ inline static void sendWatchdogEventLog(
             "watchdog countdown " + std::to_string(watchdogInterval / 1000) +
             " seconds " + std::string(*expireAction) + " action");
 
+#ifdef SEL_LOGGER_SEND_TO_LOGGING_SERVICE
+        sdbusplus::message_t newLogEntry = conn->new_method_call(
+            "xyz.openbmc_project.Logging", "/xyz/openbmc_project/logging",
+            "xyz.openbmc_project.Logging.Create", "Create");
+        const std::string logLevel =
+            "xyz.openbmc_project.Logging.Entry.Level.Informational";
+        const std::string watchdogActionName = "WATCHDOG_ACTION";
+        newLogEntry.append(std::move(journalMsg), std::move(logLevel),
+                           std::map<std::string, std::string>(
+                               {{std::move(watchdogActionName),
+                                 std::move(std::string(*expireAction))}}));
+        conn->call(newLogEntry);
+#else
+
         std::string redfishMessageID = "OpenBMC.0.1.IPMIWatchdog";
 
         selAddSystemRecord(
             conn, journalMsg, std::string(msg.get_path()), eventData, assert,
             selBMCGenID, "REDFISH_MESSAGE_ID=%s", redfishMessageID.c_str(),
             "REDFISH_MESSAGE_ARGS=%s", eventMessageArgs.c_str(), NULL);
+#endif
     }
 }
 
