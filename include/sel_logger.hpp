@@ -31,6 +31,17 @@ constexpr static const char* pefObjPath = "/xyz/openbmc_project/pef/alerting";
 constexpr static const char* pefIface = "xyz.openbmc_project.pef.pefTask";
 constexpr static const char* pefTaskMethod = "doPefTask";
 
+#ifndef SEL_LOGGER_SEND_TO_LOGGING_SERVICE
+// SEL policy in dbus
+static constexpr const char* selLogObj = "xyz.openbmc_project.Settings";
+static constexpr const char* selLogPath =
+    "/xyz/openbmc_project/logging/settings";
+static constexpr const char* selLogIntf =
+    "xyz.openbmc_project.Logging.Settings";
+static constexpr int maxSELEntries = 2000;
+static bool maxSELEntriesReached = false;
+#endif
+
 // ID string generated using journalctl to include in the MESSAGE_ID field for
 // SEL entries.  Helps with filtering SEL entries in the journal.
 static constexpr const char* selMessageId = "b370836ccf2f4850ac5bee185b77893a";
