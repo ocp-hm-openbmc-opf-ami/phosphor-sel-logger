@@ -327,9 +327,7 @@ inline static sdbusplus::bus::match_t startThresholdAssertMonitor(
             sdbusplus::message_t AddToLog = conn->new_method_call(
                 "xyz.openbmc_project.Logging", "/xyz/openbmc_project/logging",
                 "xyz.openbmc_project.Logging.Create", "Create");
-            AddToLog.append(
-                journalMsg, LogLevel,
-                std::map<std::string, std::string>(
+            std::map<std::string, std::string> addDataMap =
                     {{"SENSOR_PATH", std::string(msg.get_path())},
                      {"EVENT", threshold},
                      {"SENSOR_DATA", selDataStr},
@@ -338,7 +336,12 @@ inline static sdbusplus::bus::match_t startThresholdAssertMonitor(
                      {"EVENT_DIR", std::to_string(assert)},
                      {"DIRECTION", direction},
                      {"THRESHOLD", std::to_string(thresholdVal)},
-                     {"READING", std::to_string(assertValue)}}));
+                     {"READING", std::to_string(assertValue)}};
+#ifdef FEATURE_STATIC_SENSOR_NUMBER
+            addDataMap["SENSOR_NUM"] =
+                std::to_string(getSensorNumberFromPath(msg.get_path()));
+#endif // FEATURE_STATIC_SENSOR_NUMBER
+            AddToLog.append(journalMsg, LogLevel, addDataMap);
             try
             {
                 conn->call(AddToLog);
