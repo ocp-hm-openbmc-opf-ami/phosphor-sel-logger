@@ -529,6 +529,13 @@ static uint16_t selAddSystemRecord(
         if (additionalData.has_value())
         {
             auto addData = additionalData.value();
+#ifdef FEATURE_STATIC_SENSOR_NUMBER
+            auto sensorNumItr = addData.find("SENSOR_NUM");
+            if (sensorNumItr != addData.end() && !sensorNumItr->second.empty())
+            {
+                response["SENSOR_NUM"] = sensorNumItr->second;
+            }
+#endif // FEATURE_STATIC_SENSOR_NUMBER
             auto itr = addData.find("SENSOR_TYPE");
             if (itr != addData.end())
             {

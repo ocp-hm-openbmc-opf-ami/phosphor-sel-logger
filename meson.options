@@ -16,3 +16,5 @@ option('sel-delete', type: 'boolean',
        description: 'Enables ability to delete SEL entries given a record ID')
 option('sel-extended', type: 'boolean',
        description: 'Enables extended SEL support to store extended data in emmc/sdcard')
+option('static-sensor-number', type: 'boolean', value: false,
+       description: 'Use static sensor numbers from D-Bus Sensor properties.')

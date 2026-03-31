@@ -50,6 +50,10 @@ if get_option('sel-extended')
   cpp_args += '-DSEL_LOGGER_ENABLE_SEL_EXTENDED'
 endif
 
+if get_option('static-sensor-number')
+  cpp_args += '-DFEATURE_STATIC_SENSOR_NUMBER'
+endif
+
 executable(
   'sel-logger',
   'src/sel_logger.cpp',
