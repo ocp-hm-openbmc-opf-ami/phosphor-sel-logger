@@ -338,9 +338,9 @@ inline static sdbusplus::bus::match_t startThresholdAssertMonitor(
                 {"THRESHOLD", std::to_string(thresholdVal)},
                 {"READING", std::to_string(assertValue)}};
 #ifdef FEATURE_STATIC_SENSOR_NUMBER
-            sdbusplus::message_t getSensorNum = conn->new_method_call(
-                msg.get_sender(), msg.get_path(),
-                "org.freedesktop.DBus.Properties", "Get");
+            sdbusplus::message_t getSensorNum =
+                conn->new_method_call(msg.get_sender(), msg.get_path(),
+                                      "org.freedesktop.DBus.Properties", "Get");
             getSensorNum.append("xyz.openbmc_project.Sensor.Value",
                                 "SensorNumber");
             try
