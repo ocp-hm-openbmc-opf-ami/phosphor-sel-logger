@@ -338,8 +338,28 @@ inline static sdbusplus::bus::match_t startThresholdAssertMonitor(
                 {"THRESHOLD", std::to_string(thresholdVal)},
                 {"READING", std::to_string(assertValue)}};
 #ifdef FEATURE_STATIC_SENSOR_NUMBER
-            addDataMap["SENSOR_NUM"] =
-                std::to_string(getSensorNumberFromPath(msg.get_path()));
+            sdbusplus::message_t getSensorNum = conn->new_method_call(
+                msg.get_sender(), msg.get_path(),
+                "org.freedesktop.DBus.Properties", "Get");
+            getSensorNum.append("xyz.openbmc_project.Sensor.Value",
+                                "SensorNumber");
+            try
+            {
+                std::variant<uint8_t, uint16_t> sensorNumValue;
+                auto getSensorNumResp = conn->call(getSensorNum);
+                getSensorNumResp.read(sensorNumValue);
+                auto sensorNum = std::visit(
+                    [](const auto& value) {
+                        return static_cast<uint16_t>(value);
+                    },
+                    sensorNumValue);
+                addDataMap["SENSOR_NUM"] = std::to_string(sensorNum);
+            }
+            catch (const sdbusplus::exception_t&)
+            {
+                std::cerr << "error getting SensorNumber from "
+                          << msg.get_path() << "\n";
+            }
 #endif // FEATURE_STATIC_SENSOR_NUMBER
             AddToLog.append(journalMsg, LogLevel, addDataMap);
             try
