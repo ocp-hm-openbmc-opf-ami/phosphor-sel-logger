@@ -485,9 +485,17 @@ static uint16_t selAddSystemRecord(
     auto itr = addData.find("EVENT_TYPE");
     if (itr != addData.end())
     {
-        eventType = static_cast<uint8_t>(std::stoi(addData["EVENT_TYPE"]));
-        eventType &= 0x7F; // skipping 8th bit to retrive eventReadingTypeCode.
-        if (eventType != 0x01)
+        try
+        {
+            eventType = static_cast<uint8_t>(std::stoi(itr->second));
+            eventType &=
+                0x7F; // skipping 8th bit to retrive eventReadingTypeCode.
+            if (eventType != 0x01)
+            {
+                severity = naLevel;
+            }
+        }
+        catch (const std::exception&)
         {
             severity = naLevel;
         }
@@ -653,6 +661,14 @@ static uint16_t selAddOemRecordExt(
     {
         throw std::invalid_argument("Event data too large");
     }
+    if (selData.size() <= 12)
+    {
+        throw std::invalid_argument("Event data too small");
+    }
+    if (eventData.empty())
+    {
+        throw std::invalid_argument("Event data output is empty");
+    }
 
     if (selData[2] != oemRecordType)
     {
@@ -660,12 +676,12 @@ static uint16_t selAddOemRecordExt(
     }
 
     eventData[0] = extendedSelSignature;
-    uint8_t eventDir = selData[13] &
+    uint8_t eventDir = selData[12] &
                        0x80; // 80h representing the event direction
-    uint8_t eventType = selData[13] & 0x7F; // 7F representing EventType.
+    uint8_t eventType = selData[12] & 0x7F; // 7F representing EventType.
     uint16_t generatorID =
         static_cast<uint16_t>(selData[7] | (selData[8] << 8));
-    uint8_t sensorType = selData[11];
+    uint8_t sensorType = selData[10];
 
     std::string selDataStr;
     toHexStr(selData, selDataStr);
