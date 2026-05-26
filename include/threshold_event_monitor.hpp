@@ -228,66 +228,30 @@ inline static sdbusplus::bus::match_t startThresholdAssertMonitor(
         if (event == "CriticalLow")
         {
             threshold = "critical low";
-            if (assert)
-            {
-                eventType = eventErr;
-                direction = "low";
-                redfishMessageID += ".SensorThresholdCriticalLowGoingLow";
-            }
-            else
-            {
-                eventType = eventInfo;
-                direction = "high";
-                redfishMessageID += ".SensorThresholdCriticalLowGoingHigh";
-            }
+            eventType = eventErr;
+            direction = "low";
+            redfishMessageID += ".SensorThresholdCriticalLowGoingLow";
         }
         else if (event == "WarningLow")
         {
             threshold = "warning low";
-            if (assert)
-            {
-                eventType = eventWarn;
-                direction = "low";
-                redfishMessageID += ".SensorThresholdWarningLowGoingLow";
-            }
-            else
-            {
-                eventType = eventInfo;
-                direction = "high";
-                redfishMessageID += ".SensorThresholdWarningLowGoingHigh";
-            }
+            eventType = eventWarn;
+            direction = "low";
+            redfishMessageID += ".SensorThresholdWarningLowGoingLow";
         }
         else if (event == "WarningHigh")
         {
             threshold = "warning high";
-            if (assert)
-            {
-                eventType = eventWarn;
-                direction = "high";
-                redfishMessageID += ".SensorThresholdWarningHighGoingHigh";
-            }
-            else
-            {
-                eventType = eventInfo;
-                direction = "low";
-                redfishMessageID += ".SensorThresholdWarningHighGoingLow";
-            }
+            eventType = eventWarn;
+            direction = "high";
+            redfishMessageID += ".SensorThresholdWarningHighGoingHigh";
         }
         else if (event == "CriticalHigh")
         {
             threshold = "critical high";
-            if (assert)
-            {
-                eventType = eventErr;
-                direction = "high";
-                redfishMessageID += ".SensorThresholdCriticalHighGoingHigh";
-            }
-            else
-            {
-                eventType = eventInfo;
-                direction = "low";
-                redfishMessageID += ".SensorThresholdCriticalHighGoingLow";
-            }
+            eventType = eventErr;
+            direction = "high";
+            redfishMessageID += ".SensorThresholdCriticalHighGoingHigh";
         }
         else if (event == "NonRecoverableHigh")
         {
