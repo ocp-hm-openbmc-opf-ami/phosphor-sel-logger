@@ -109,7 +109,17 @@ static void doPefTask(
     {
         senNum = getSensorNumberFromPath(path);
         evtype = getSensorEventTypeFromPath(path);
-        sentype = getSensorTypeFromPath(path);
+        // Use explicitly provided sensor type when available (e.g., from
+        // platform event messages where the IPMI sensorType byte is known).
+        // Fall back to path-based lookup only when not provided.
+        if (addSenType.has_value())
+        {
+            sentype = addSenType.value();
+        }
+        else
+        {
+            sentype = getSensorTypeFromPath(path);
+        }
     }
     else if (addSenType.has_value())
     {
