@@ -15,9 +15,10 @@
 */
 
 #pragma once
+#include <phosphor-logging/log.hpp>
+
 #include <chrono>
 #include <filesystem>
-#include <phosphor-logging/log.hpp>
 
 static constexpr uint8_t oemRecordType = 0xDF;
 static constexpr uint8_t extendedSelSignature = 0xAA;
@@ -129,8 +130,8 @@ static void doPefTask(
                 phosphor::logging::log<phosphor::logging::level::ERR>(
                     "Invalid IPMI sensor type from addSenType; "
                     "falling back to path-based lookup.",
-                    phosphor::logging::entry("SENSOR_TYPE=0x%x",
-                                             static_cast<int>(providedSenType)));
+                    phosphor::logging::entry(
+                        "SENSOR_TYPE=0x%x", static_cast<int>(providedSenType)));
                 sentype = getSensorTypeFromPath(path);
             }
             else
