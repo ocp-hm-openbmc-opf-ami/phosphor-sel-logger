@@ -17,6 +17,7 @@
 #pragma once
 #include <chrono>
 #include <filesystem>
+#include <phosphor-logging/log.hpp>
 
 static constexpr uint8_t oemRecordType = 0xDF;
 static constexpr uint8_t extendedSelSignature = 0xAA;
@@ -95,6 +96,14 @@ static void toHexStr(const std::vector<uint8_t>& data, std::string& hexStr)
     hexStr = stream.str();
 }
 
+// Returns true if the sensor type is a valid IPMI sensor type.
+// IPMI spec: 0x00 is reserved; 0x2D-0xBF are reserved/out-of-range;
+// 0x01-0x2C are standard types; 0xC0-0xFF are OEM-defined.
+static bool isValidSensorType(uint8_t senType)
+{
+    return (senType >= 0x01 && senType <= 0x2C) || senType >= 0xC0;
+}
+
 static void doPefTask(
     std::shared_ptr<sdbusplus::asio::connection> conn, const std::string& path,
     bool assert, const uint16_t& recordId, const std::vector<uint8_t>& selData,
@@ -114,11 +123,36 @@ static void doPefTask(
         // Fall back to path-based lookup only when not provided.
         if (addSenType.has_value())
         {
-            sentype = addSenType.value();
+            uint8_t providedSenType = addSenType.value();
+            if (!isValidSensorType(providedSenType))
+            {
+                phosphor::logging::log<phosphor::logging::level::ERR>(
+                    "Invalid IPMI sensor type from addSenType; "
+                    "falling back to path-based lookup.",
+                    phosphor::logging::entry("SENSOR_TYPE=0x%x",
+                                             static_cast<int>(providedSenType)));
+                sentype = getSensorTypeFromPath(path);
+            }
+            else
+            {
+                sentype = providedSenType;
+            }
         }
         else
         {
-            sentype = getSensorTypeFromPath(path);
+            auto derivedType = getSensorTypeFromPath(path);
+            if (!isValidSensorType(derivedType))
+            {
+                phosphor::logging::log<phosphor::logging::level::ERR>(
+                    "Unable to determine valid sensor type from path; "
+                    "defaulting to 0xFF (unspecified).",
+                    phosphor::logging::entry("PATH=%s", path.c_str()));
+                sentype = selEvtDataUnspecified;
+            }
+            else
+            {
+                sentype = derivedType;
+            }
         }
     }
     else if (addSenType.has_value())
@@ -139,7 +173,8 @@ static void doPefTask(
     }
     catch (sdbusplus::exception_t&)
     {
-        std::cerr << "Failed to call doPefTask\n";
+        phosphor::logging::log<phosphor::logging::level::ERR>(
+            "Failed to call doPefTask");
     }
 }
 
