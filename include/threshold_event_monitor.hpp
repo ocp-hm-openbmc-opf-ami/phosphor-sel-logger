@@ -228,30 +228,66 @@ inline static sdbusplus::bus::match_t startThresholdAssertMonitor(
         if (event == "CriticalLow")
         {
             threshold = "critical low";
-            eventType = eventErr;
-            direction = "low";
-            redfishMessageID += ".SensorThresholdCriticalLowGoingLow";
+            if (assert)
+            {
+                eventType = eventErr;
+                direction = "low";
+                redfishMessageID += ".SensorThresholdCriticalLowGoingLow";
+            }
+            else
+            {
+                eventType = eventInfo;
+                direction = "high";
+                redfishMessageID += ".SensorThresholdCriticalLowGoingLow";
+            }
         }
         else if (event == "WarningLow")
         {
             threshold = "warning low";
-            eventType = eventWarn;
-            direction = "low";
-            redfishMessageID += ".SensorThresholdWarningLowGoingLow";
+            if (assert)
+            {
+                eventType = eventWarn;
+                direction = "low";
+                redfishMessageID += ".SensorThresholdWarningLowGoingLow";
+            }
+            else
+            {
+                eventType = eventInfo;
+                direction = "high";
+                redfishMessageID += ".SensorThresholdWarningLowGoingLow";
+            }
         }
         else if (event == "WarningHigh")
         {
             threshold = "warning high";
-            eventType = eventWarn;
-            direction = "high";
-            redfishMessageID += ".SensorThresholdWarningHighGoingHigh";
+            if (assert)
+            {
+                eventType = eventWarn;
+                direction = "high";
+                redfishMessageID += ".SensorThresholdWarningHighGoingHigh";
+            }
+            else
+            {
+                eventType = eventInfo;
+                direction = "low";
+                redfishMessageID += ".SensorThresholdWarningHighGoingHigh";
+            }
         }
         else if (event == "CriticalHigh")
         {
             threshold = "critical high";
-            eventType = eventErr;
-            direction = "high";
-            redfishMessageID += ".SensorThresholdCriticalHighGoingHigh";
+            if (assert)
+            {
+                eventType = eventErr;
+                direction = "high";
+                redfishMessageID += ".SensorThresholdCriticalHighGoingHigh";
+            }
+            else
+            {
+                eventType = eventInfo;
+                direction = "low";
+                redfishMessageID += ".SensorThresholdCriticalHighGoingHigh";
+            }
         }
         else if (event == "NonRecoverableHigh")
         {
@@ -268,7 +304,7 @@ inline static sdbusplus::bus::match_t startThresholdAssertMonitor(
                 eventType = eventInfo;
                 direction = "low";
                 redfishMessageID +=
-                    ".SensorThresholdNonRecoverableHighGoingLow";
+                    ".SensorThresholdNonRecoverableHighGoingHigh";
             }
         }
         else if (event == "NonRecoverableLow")
@@ -277,14 +313,13 @@ inline static sdbusplus::bus::match_t startThresholdAssertMonitor(
             if (assert)
             {
                 eventType = eventErr;
-                direction = "high";
-                redfishMessageID +=
-                    ".SensorThresholdNonRecoverableLowGoingHigh";
+                direction = "low";
+                redfishMessageID += ".SensorThresholdNonRecoverableLowGoingLow";
             }
             else
             {
                 eventType = eventInfo;
-                direction = "low";
+                direction = "high";
                 redfishMessageID += ".SensorThresholdNonRecoverableLowGoingLow";
             }
         }
