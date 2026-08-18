@@ -1,3 +1,5 @@
+option('tests', type: 'feature',
+       description: 'Enable Unit tests')
 option('log-threshold', type: 'boolean',
        description: 'Automatically log SEL records for threshold sensor events')
 option('log-pulse', type: 'boolean',
