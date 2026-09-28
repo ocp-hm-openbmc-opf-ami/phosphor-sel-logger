@@ -11,8 +11,17 @@ project(
 
 cpp_args = []
 
+if get_option('tests').enabled()
+  cpp_args += ['-Wno-error=return-type', '-Wno-error=unused-function',
+               '-Wno-error=unused-variable']
+  sdbusplus_dep = subproject('sdbusplus').get_variable('sdbusplus_dep')
+  meson.override_dependency('sdbusplus',sdbusplus_dep)
+  phosphor_dbus_interfaces_dep = dependency('phosphor-dbus-interfaces-ami')
+else
+  sdbusplus_dep = dependency('sdbusplus')
+endif
 deps = [
-  dependency('sdbusplus'),
+  sdbusplus_dep,
   dependency('libsystemd'),
   dependency('boost'),
 ]
@@ -33,9 +42,13 @@ if get_option('log-host')
   cpp_args += '-DSEL_LOGGER_MONITOR_HOST_ERROR_EVENTS'
 endif
 if get_option('send-to-logger')
-  cpp_args += '-DSEL_LOGGER_SEND_TO_LOGGING_SERVICE'
-
-  deps += dependency('phosphor-logging')
+    if get_option('tests').enabled()
+      # send-to-logger produces src conflicts    
+      deps += subproject('phosphor-logging').get_variable('phosphor_logging_dep')
+    else
+      cpp_args += '-DSEL_LOGGER_SEND_TO_LOGGING_SERVICE'
+      deps += dependency('phosphor-logging')
+    endif
 endif
 
 if get_option('log-crash')
@@ -54,6 +67,11 @@ if get_option('static-sensor-number')
   cpp_args += '-DFEATURE_STATIC_SENSOR_NUMBER'
 endif
 
+if get_option('tests').enabled()
+  deps += subproject('intel-ipmi-oem').get_variable('intel_ipmi_oem_dep')
+  deps += subproject('phosphor-host-ipmid').get_variable('phosphor_host_ipmid_dep')
+endif
+
 executable(
   'sel-logger',
   'src/sel_logger.cpp',
@@ -69,4 +87,8 @@ if systemd.found()
   install_data(
     'service_files/xyz.openbmc_project.Logging.IPMI.service',
     install_dir: systemd.get_variable('systemdsystemunitdir'))
+endif
+
+if get_option('tests').enabled()
+  subdir('tests')
 endif

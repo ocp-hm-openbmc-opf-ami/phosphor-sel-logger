@@ -1,0 +1,7 @@
+[wrap-git]
+url = https://git.ami.com/core/ami-bmc/one-tree/core/intel-ipmi-oem.git
+revision = HEAD
+patch_directory = intel-ipmi-oem
+
+[provide]
+intel-ipmi-oem = intel_ipmi_oem_dep
