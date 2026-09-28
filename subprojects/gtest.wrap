@@ -1,0 +1,4 @@
+[wrap-git]
+url = https://github.com/google/googletest
+# Captured: git ls-remote https://github.com/google/googletest HEAD | cut -f1
+revision = 7358557f03c2fec8a5ebcef46e6a83278493db4f
