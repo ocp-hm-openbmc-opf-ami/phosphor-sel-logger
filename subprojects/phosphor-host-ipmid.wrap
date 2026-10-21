@@ -1,5 +1,5 @@
 [wrap-git]
-url = https://git.ami.com/core/ami-bmc/one-tree/core/phosphor-host-ipmid.git
+url = https://github.com/ocp-hm-openbmc-opf-ami/phosphor-host-ipmid.git
 revision = HEAD
 patch_directory = phosphor-host-ipmid
 
