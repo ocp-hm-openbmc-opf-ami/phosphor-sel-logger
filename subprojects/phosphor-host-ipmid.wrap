@@ -1,0 +1,7 @@
+[wrap-git]
+url = https://github.com/ocp-hm-openbmc-opf-ami/phosphor-host-ipmid.git
+revision = HEAD
+patch_directory = phosphor-host-ipmid
+
+[provide]
+phosphor-host-ipmid = phosphor_host_ipmid_dep
