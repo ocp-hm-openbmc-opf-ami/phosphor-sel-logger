@@ -16,9 +16,11 @@
 
 #pragma once
 #include <phosphor-logging/log.hpp>
+#include <sdbusplus/asio/connection.hpp>
 
 #include <chrono>
 #include <filesystem>
+#include <string>
 
 static constexpr uint8_t oemRecordType = 0xDF;
 static constexpr uint8_t extendedSelSignature = 0xAA;
