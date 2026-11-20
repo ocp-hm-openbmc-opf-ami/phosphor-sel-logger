@@ -15,6 +15,8 @@
 */
 
 #pragma once
+#include <boost/container/flat_map.hpp>
+#include <sdbusplus/bus/match.hpp>
 #include <sel_logger.hpp>
 #include <sensorutils.hpp>
 
@@ -84,6 +86,7 @@ inline static void sendWatchdogEventLog(
 
     if (!expireAction)
     {
+        expireAction = "";
         auto getExpireAction = watchdogStatus.find("ExpireAction");
         if (getExpireAction != watchdogStatus.end())
         {
@@ -253,8 +256,7 @@ inline static sdbusplus::bus::match_t startWatchdogEventMonitor(
     std::shared_ptr<sdbusplus::asio::connection> conn)
 {
     auto watchdogEventMatcherCallback = [conn](sdbusplus::message_t& msg) {
-        std::string expiredAction;
-        msg.read(expiredAction);
+        auto expiredAction = msg.unpack<std::string>();
 
         std::string_view action = expiredAction;
         action.remove_prefix(
